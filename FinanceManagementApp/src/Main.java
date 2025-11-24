@@ -22,7 +22,7 @@ public class Main {
             System.out.println("2) Create Account");
             System.out.println("3) Exit Program");
             System.out.print("Choose: ");
-            String choice = sc.nextLine();
+            String choice = sc.nextLine(); //nextline reads whole line until enter pressed
 
             switch (choice) {
                 case "1": login(); break;
@@ -51,11 +51,11 @@ public class Main {
 
     private static void login() {
         System.out.print("Username: ");
-        String u = sc.nextLine(); //nextline reads whole line until enter pressed
+        String u = sc.nextLine();
         System.out.print("Password: ");
         String p = sc.nextLine();
 
-        //check from User class if username(u) and password(p) exists
+        //check Users hashmap if "u" and "p" are right.
         if (users.containsKey(u) && users.get(u).getPassword().equals(p)) {
             currentUser = users.get(u); //assign user to operate main menu.
             System.out.println("Logged in!");
@@ -74,7 +74,7 @@ public class Main {
             System.out.println("4) Show Diagram");
             System.out.println("5) Log Out");
             System.out.print("Choose: ");
-            String c = sc.nextLine(); //reads input until enter pressed
+            String c = sc.nextLine();
 
             switch (c) {
                 case "1": manageCategories(); break;
