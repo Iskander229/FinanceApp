@@ -7,18 +7,8 @@ public class Main {
     private static final CategoryFactory categoryFactory = new CategoryFactory();
 
     public static void main(String[] args) {
-        System.out.println("=== Personal Finance App ===");
-        System.out.println("Database location: " + userDatabase.getDatabasePath());
-
         // Load users from file
         userDatabase.loadUsers();
-
-        // Test: Create a test user if none exist
-        if (!userDatabase.userExists("test")) {
-            System.out.println("Creating test user...");
-            User testUser = new User("test", "test123");
-            userDatabase.addUser(testUser);
-        }
 
         boolean running = true;
         while (running) {
@@ -91,10 +81,8 @@ public class Main {
             System.out.print("Choose: ");
             String choice = sc.nextLine();
 
-            CategoryManager categoryManager = new CategoryManager(currentUser);
-
             switch (choice) {
-                case "1": categoryManager.manageCategories(sc); break;
+                case "1": manageCategories(); break;
                 case "2":
                     System.out.print("Category name: ");
                     String name = sc.nextLine();
@@ -113,6 +101,68 @@ public class Main {
         }
     }
 
+    private static void manageCategories() {
+        List<Category> categories = currentUser.getCategories();
+
+        if (categories.isEmpty()) {
+            System.out.println("No categories available.");
+            return;
+        }
+
+        while (true) {
+            System.out.println("\n=== Categories ===");
+            for (int i = 0; i < categories.size(); i++) {
+                System.out.println((i + 1) + ") " + categories.get(i).getName());
+            }
+            System.out.println("0) Back");
+            System.out.print("Choose: ");
+            String choice = sc.nextLine();
+
+            if (choice.equals("0")) return;
+
+            try {
+                int index = Integer.parseInt(choice) - 1;
+                if (index >= 0 && index < categories.size()) {
+                    categoryMenu(categories.get(index));
+                } else {
+                    System.out.println("Invalid choice. Please enter a number between 1 and " + categories.size());
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number.");
+            }
+        }
+    }
+
+    private static void categoryMenu(Category category) {
+        while (true) {
+            System.out.println("\n=== " + category.getName() + " ===");
+            System.out.println("1) Add Income");
+            System.out.println("2) Add Expense");
+            System.out.println("0) Back");
+            System.out.print("Choose: ");
+            String choice = sc.nextLine();
+
+            switch (choice) {
+                case "1":
+                    System.out.print("Amount: ");
+                    double income = readDouble();
+                    category.addIncome(income);
+                    System.out.println("Income added.");
+                    break;
+                case "2":
+                    System.out.print("Amount: ");
+                    double expense = readDouble();
+                    category.addExpense(expense);
+                    System.out.println("Expense added.");
+                    break;
+                case "0":
+                    return;
+                default:
+                    System.out.println("Invalid choice.");
+            }
+        }
+    }
+
     private static void clearStart() {
         System.out.println("\n=== CLEAR START ===");
         System.out.println("A) Clear ONLY incomes & expenses");
@@ -121,10 +171,12 @@ public class Main {
         String choice = sc.nextLine().toUpperCase();
 
         if (choice.equals("A")) {
-            currentUser.clearValues();
+            for (Category c : currentUser.getCategories()) {
+                c.clearValues();
+            }
             System.out.println("All category values cleared.");
         } else if (choice.equals("B")) {
-            currentUser.clearAll();
+            currentUser.getCategories().clear();
             System.out.println("All categories deleted.");
         } else {
             System.out.println("Invalid choice.");
@@ -132,16 +184,43 @@ public class Main {
     }
 
     private static void showDiagram() {
-        if (currentUser.getCategories().isEmpty()) {
+        List<Category> categories = currentUser.getCategories();
+
+        if (categories.isEmpty()) {
             System.out.println("No categories available.");
             return;
         }
 
-        Category topIncome = currentUser.getTopIncomeCategory();
-        Category topExpense = currentUser.getTopExpenseCategory();
+        Category topIncome = null;
+        Category topExpense = null;
+        double maxIncome = -1;
+        double maxExpense = -1;
+
+        for (Category cat : categories) {
+            if (cat.getIncome() > maxIncome) {
+                maxIncome = cat.getIncome();
+                topIncome = cat;
+            }
+            if (cat.getExpense() > maxExpense) {
+                maxExpense = cat.getExpense();
+                topExpense = cat;
+            }
+        }
 
         System.out.println("\n=== TOP CATEGORIES ===");
-        System.out.println("Top Income: " + topIncome.getName() + " -> " + topIncome.getIncome());
-        System.out.println("Top Expense: " + topExpense.getName() + " -> " + topExpense.getExpense());
+        System.out.println("Top Income: " +
+                (topIncome != null ? topIncome.getName() + " -> " + topIncome.getIncome() : "None"));
+        System.out.println("Top Expense: " +
+                (topExpense != null ? topExpense.getName() + " -> " + topExpense.getExpense() : "None"));
+    }
+
+    private static double readDouble() {
+        while (true) {
+            try {
+                return Double.parseDouble(sc.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.print("Please enter a valid number: ");
+            }
+        }
     }
 }

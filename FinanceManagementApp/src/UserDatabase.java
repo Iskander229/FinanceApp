@@ -1,30 +1,18 @@
 import java.io.*;
 import java.util.*;
 
+// SINGLETON PATTERN: Only one instance of UserDatabase exists
 public class UserDatabase {
-    private static UserDatabase instance;
+    private static UserDatabase instance;  // Single instance
     private Map<String, User> users = new HashMap<>();
-    private String filePath;
+    private static final String FILE_NAME = "users.dat";
 
+    // Private constructor prevents external instantiation
     private UserDatabase() {
-        initializeFilePath();
-        loadUsers();
+        System.out.println("UserDatabase instance created.");
     }
 
-    private void initializeFilePath() {
-        // Use user's home directory for persistent storage
-        String userHome = System.getProperty("user.home");
-        String appDirPath = userHome + File.separator + ".personal_finance_app";
-
-        File appDir = new File(appDirPath);
-        if (!appDir.exists()) {
-            appDir.mkdirs(); // Create directory if it doesn't exist
-        }
-
-        filePath = appDirPath + File.separator + "users.dat";
-        System.out.println("Database location: " + filePath);
-    }
-
+    // Global access point to the single instance
     public static UserDatabase getInstance() {
         if (instance == null) {
             instance = new UserDatabase();
@@ -32,12 +20,13 @@ public class UserDatabase {
         return instance;
     }
 
+    // Add user and auto-save
     public void addUser(User user) {
-        System.out.println("Adding user: " + user.getUsername());
         users.put(user.getUsername(), user);
         saveUsers();
     }
 
+    // Authenticate user
     public User authenticate(String username, String password) {
         User user = users.get(username);
         if (user != null && user.getPassword().equals(password)) {
@@ -46,46 +35,37 @@ public class UserDatabase {
         return null;
     }
 
+    // Check if user exists
     public boolean userExists(String username) {
         return users.containsKey(username);
     }
 
+    // Save users to file (persistence)
     public void saveUsers() {
-        System.out.println("Saving " + users.size() + " users to: " + filePath);
-
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(
+                new FileOutputStream(FILE_NAME))) {
             oos.writeObject(users);
-            System.out.println("Users saved successfully!");
+            System.out.println("Users saved to " + FILE_NAME);
         } catch (IOException e) {
-            System.err.println("Error saving users: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Error saving: " + e.getMessage());
         }
     }
 
+    // Load users from file (persistence)
     @SuppressWarnings("unchecked")
     public void loadUsers() {
-        File file = new File(filePath);
+        File file = new File(FILE_NAME);
         if (!file.exists()) {
-            System.out.println("No existing user database found at: " + filePath);
+            System.out.println("No saved users found.");
             return;
         }
 
-        System.out.println("Loading users from: " + filePath);
-
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
-            Object obj = ois.readObject();
-            if (obj instanceof Map) {
-                users = (Map<String, User>) obj;
-                System.out.println("Successfully loaded " + users.size() + " users.");
-            }
+        try (ObjectInputStream ois = new ObjectInputStream(
+                new FileInputStream(FILE_NAME))) {
+            users = (Map<String, User>) ois.readObject();
+            System.out.println("Loaded " + users.size() + " users.");
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Error loading users: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Error loading: " + e.getMessage());
         }
-    }
-
-    // For debugging
-    public String getDatabasePath() {
-        return filePath;
     }
 }
